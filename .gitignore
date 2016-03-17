@@ -19,6 +19,7 @@ local.properties
 wip/
 WIP/
 RIG_SETUP_ATUTO_v3.0_-_JIGEN/
+js*
 
 # External tool builders
 .externalToolBuilders/
