@@ -1,0 +1,6 @@
+vector $BGcolor = `displayRGBColor -q "background"`;
+
+if ( $BGcolor != <<0, 1, 0>> )
+	displayRGBColor "background" 0 1 0;
+else
+	displayRGBColor "background" 0.45 0.45 0.45;

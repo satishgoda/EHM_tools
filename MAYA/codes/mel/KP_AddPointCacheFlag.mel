@@ -1,0 +1,29 @@
+/**
+adds point cache flag to selected nodes
+**/
+
+global proc KP_AddPointCacheFlag()
+{
+	string $sel[] = `ls -sl`;
+	
+	for ($i = 0; $i < size($sel); $i++)
+	{
+		KP_AddPointCacheFlagTo $sel[$i];	
+	}	
+}
+
+global proc KP_AddPointCacheFlagTo(string $object)
+{
+	string $parts[];
+	tokenize ($object, "|", $parts);
+	string $lastPart = $parts[(size($parts)-1)];
+	
+	if (!`attributeExists "KP_PCFlag" $object`)
+	{
+		addAttr -dt "string" -ln "KP_PCFlag" $object;		
+	}
+	setAttr -l 0 ($object+".KP_PCFlag");
+	setAttr -type "string" ($object+".KP_PCFlag") $lastPart;
+	setAttr -l 1 ($object+".KP_PCFlag");
+}
+

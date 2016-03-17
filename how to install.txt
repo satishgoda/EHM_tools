@@ -1,0 +1,48 @@
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+FOR MAYA TOOLS
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+# If you ARE working in Animascope:
+# =========================================================
+
+1. Make a (python) shelf button from codes below:
+
+import sys
+sys.path.append( r"M:\MAYA_DEV\EHM_tools\MAYA" ) 
+import codes
+reload( codes )
+codes.UI()
+
+
+
+
+# If you're NOT working in Animascope:
+# =========================================================
+
+1. Copy ehm_tools folder in an arbitrary place. 
+	It could look like this:
+		D:\EHM_tools
+	
+
+2. Make a (python) shelf button from codes below: ( change the address in second line to where you copied MAYA files )
+
+import sys
+sys.path.append( r"D:\EHM_tools\MAYA" ) 
+import codes
+reload( codes )
+codes.UI()
+
+
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+FOR SOFTIMAGE TOOLS
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+
+
+
+----------------------------------------
+Get latest updates in here: https://www.dropbox.com/sh/sufztej1dz6b5nn/V5MEvNgomG/ehsan_scripts
+contact: contact.ehm@gmail.com
+	

@@ -1,0 +1,104 @@
+global proc wf.drivenKeys_extract()
+{
+string $sels[]=`ls -sl`;
+string $directAnimCurves[0];
+string $animCurves[0];
+	print ("\n\n*****************************************************\n\n");
+int $k;
+for ($s in $sels)
+{
+	string $blendWeights[]=`listConnections -type blendWeighted -scn true -s true -d false $s`;
+	$directAnimCurves=`listConnections -type animCurveUA -scn true -s true -d false $s`;
+
+	
+for ($blend in $blendWeights)
+	{
+		$animCurves=`listConnections -type animCurveUA -scn true -s true -d false $blend`;
+		string $plug[]=`listConnections -s false -d true -p true -scn true $blend`;
+	
+	//appendStringArray($animCurves,$directAnimCurves,$k);
+
+		for ($a in $animCurves)
+		{
+		$keycount=`keyframe -q -kc $a`;
+		string $drivers[]=`listConnections -p true -scn true -s true -d false $a`;
+		
+		int $i=0;
+		
+		while ($i<$keycount)
+		{
+		selectKey -in $i $a;
+		float $driverValues[]=`keyframe -q -fc`;
+		float $drivenValues[]=`keyframe -q -vc`;
+		
+	print ("setAttr "+$drivers[0]+" "+$driverValues[0]+"\;\n");
+	print ("setAttr "+$plug[0]+" "+$drivenValues[0]+"\;\n");	
+	
+	
+	if ($i<($keycount-1))
+	{
+	print ("setDrivenKeyframe -itt linear -ott linear -currentDriver "+$drivers[0]+" "+$plug[0]+"\;\n");
+	print ("\n");
+	}
+	if ($i==($keycount-1))
+	{
+	print ("setDrivenKeyframe -itt spline -ott spline -currentDriver "+$drivers[0]+" "+$plug[0]+"\;\n");
+	string $buffer[];
+	tokenize $plug[0] "." $buffer;
+	print ("selectKey -in "+$i+" -at "+$buffer[1]+" "+$buffer[0]+"\;\n");
+	print ("setInfinity -poi linear "+$plug[0]+"\;\n");
+	print ("setAttr "+$drivers[0]+" 0 "+"\;\n");
+	print ("\n\n");
+	}
+	
+		$i++;
+		
+		}
+
+
+		}
+	
+}
+
+	
+for ($direct in $directAnimCurves)
+	{
+	string $plug[]=`listConnections -s false -d true -p true -scn true $direct`;
+	$keycount=`keyframe -q -kc $direct`;
+	string $drivers[]=`listConnections -p true -scn true -s true -d false $direct`;
+		
+	int $i=0;
+		
+	while ($i<$keycount)
+	{
+	selectKey -in $i $direct;
+	float $driverValues[]=`keyframe -q -fc`;
+	float $drivenValues[]=`keyframe -q -vc`;
+		
+	print ("setAttr "+$drivers[0]+" "+$driverValues[0]+"\;\n");
+	print ("setAttr "+$plug[0]+" "+$drivenValues[0]+"\;\n");	
+	if ($i<($keycount-1))
+	{
+	print ("setDrivenKeyframe -itt linear -ott linear -currentDriver "+$drivers[0]+" "+$plug[0]+"\;\n");
+	print ("\n");
+	}
+	if ($i==($keycount-1))
+	{
+	print ("setDrivenKeyframe -itt spline -ott spline -currentDriver "+$drivers[0]+" "+$plug[0]+"\;\n");
+	string $buffer[];
+	tokenize $plug[0] "."  $buffer;
+	print ("selectKey -in "+$i+" -at "+$buffer[1]+" "+$buffer[0]+"\;\n");
+	print ("setInfinity -poi linear "+$plug[0]+"\;\n");
+	print ("setAttr "+$drivers[0]+" 0 "+"\;\n");
+	print ("\n\n");
+	}
+			
+	$i++;
+		
+	}
+
+	
+	
+	}
+}
+}

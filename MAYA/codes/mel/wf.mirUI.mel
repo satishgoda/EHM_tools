@@ -1,0 +1,284 @@
+
+global proc wf.mirUI()
+{
+
+
+
+	if (`window -q -ex mirWindow` == true) 
+		deleteUI mirWindow;
+	window -w 340 -h 450 -s false -t "MirrorUI v1.3b by wajdy farhan" mirWindow;
+
+	scrollLayout sand;
+	rowColumnLayout -nc 3  -columnWidth 1 100 -columnWidth 2 100 -columnWidth 3 100 rock;
+	
+	text -l "";
+	text -l "";
+	text -l "";
+	
+	
+	text -l "";
+	button -l "Mirror" -c "mircmd";
+	text -l "";
+	text -l "";
+	button -l "Reset" -c "rescmd";
+	text -l "";
+	
+	
+	
+	text -l "";
+	text -l "";
+	text -l "";
+
+	text -l "Object 1";
+	text -l "Reference";
+	text -l "Object 2";
+	
+	text -l "";
+	text -l "";
+	text -l "";
+	
+	int $i=1;
+	for ($i=1;$i<=48;$i++)
+	{
+		string $b=("b"+$i);
+		button -l "load" -c ("loo(\""+$b+"\")") $b;
+		if (`optionMenu -q -ex charMenu` && ($i+1)%3==0)
+		{
+		string $s =`optionMenu -q -v charMenu`;
+		if (size($s)>0)
+		button -e -l $s $b;
+		
+		}
+	}
+	text -l "";
+	text -l "";
+	text -l "";
+	
+
+	showWindow mirWindow;
+	window -e -w 330 -h 450 mirWindow;
+}
+
+	
+global proc loo(string $bo)
+{
+	string $objs[]=`ls -sl -fl`;
+	string $obj=$objs[0];
+	
+	button -e -l $obj $bo;
+	
+}
+
+
+global proc mircmd()
+{
+	int $i=1;
+	string $btms[];
+	for ($i=1;$i<=48;$i++)
+	{
+		string $b=("b"+$i);
+		$btms[$i]=`button -q -l $b`;	
+	}
+	
+	int $j=2;
+	for($j=2;$j<=36;$j+=3)
+	{
+		if ($btms[$j] != "load")
+		{
+			if ($btms[$j-1]!= "load" && $btms[$j+1]!= "load")
+			{
+				mirror_tx2($btms[$j-1],$btms[$j+1],$btms[$j]);
+				mirror_r2($btms[$j-1],$btms[$j+1],$btms[$j]);
+				mirror_atts($btms[$j-1],$btms[$j+1]);	
+			}
+			if ($btms[$j-1]!= "load" && $btms[$j+1]== "load")
+			{
+				mirror_tx($btms[$j-1],$btms[$j-1],$btms[$j]);
+				mirror_r($btms[$j-1],$btms[$j-1],$btms[$j]);
+				
+			}
+			
+			if ($btms[$j-1]== "load" && $btms[$j+1]!= "load")
+			{
+				mirror_tx($btms[$j+1],$btms[$j+1],$btms[$j]);
+				mirror_r($btms[$j+1],$btms[$j+1],$btms[$j]);
+				
+			}
+			if ($btms[$j-1]== "load" && $btms[$j+1]== "load")
+			{
+				warning ("No objects to mirror for reference: "+$btms[$j]);
+				
+			}
+			
+			
+			
+		}
+	}
+	
+	
+	
+	
+}
+
+global proc mirror_atts(string $obj1,string $obj2)
+{
+	string $attr1[]=`listAttr -ud -k -u $obj1`;
+	string $attr2[]=`listAttr -ud -k -u $obj2`;
+
+	int $i=0;
+	while ($i<size($attr1))
+	{
+		if ($attr1[$i] == $attr2[$i])
+		{
+			$ob1_at=`getAttr ($obj1+"."+$attr1[$i])`;
+			$ob2_at=`getAttr ($obj2+"."+$attr1[$i])`;
+			
+			catchQuiet (`setAttr ($obj1+"."+$attr1[$i]) $ob2_at`);
+			catchQuiet (`setAttr ($obj2+"."+$attr1[$i]) $ob1_at`);
+		}
+		
+		$i++;
+	}
+
+
+
+
+}
+
+global proc mirror_r(string $obj1,string $obj2,string $ref)
+	
+{
+
+float $ref_r[]=`xform -q -ws -ro $ref`;
+float $obj1_r[]=`xform -q -ws -ro $obj1`;
+xform  -ws -ro $obj1_r[0]  (2*$ref_r[1]-$obj1_r[1]) (-1*$obj1_r[2]) $obj2; 
+
+
+}
+global proc mirror_r2(string $obj1,string $obj2,string $ref)
+	
+{
+float $ref_r[]=`xform -q -ws -ro $ref`;
+
+float $obj1_r[]=`xform -q -ws -ro $obj1`;
+float $obj2_r[]=`xform -q -ws -ro $obj2`;
+
+xform  -ws -ro $obj1_r[0]  (2*$ref_r[1]-$obj1_r[1]) (-1*$obj1_r[2]) $obj2; 
+xform  -ws -ro $obj2_r[0]  (2*$ref_r[1]-$obj2_r[1]) (-1*$obj2_r[2]) $obj1; 
+
+	
+}
+
+global proc mirror_tx(string $obj1,string $obj2,string $ref)
+{
+	
+float $ref_t[]=`xform -q -ws -piv $ref`;
+float $ref_r[]=`xform -q -ws -ro $ref`;
+
+float $obj1_t[]=`xform -q -ws -piv $obj1`;
+
+spaceLocator -n "obj1_loc" -p $obj1_t[0] $obj1_t[1] $obj1_t[2];
+xform -ws -piv $obj1_t[0] $obj1_t[1] $obj1_t[2] obj1_loc;
+
+group -n "obj1_gr" obj1_loc;
+
+xform -ws -piv $ref_t[0] $ref_t[1] $ref_t[2] obj1_gr;
+
+duplicate -n "obj2_gr" -rr obj1_gr; 
+scale -r -1 1 1 obj2_gr; 
+rotate -r 0 (2*$ref_r[1]) 0 obj2_gr;
+
+delete obj1_gr;
+
+
+float $obj1_loc_t[]=`xform -q -ws -piv obj1_loc`;
+float $obj2_t[]=`xform -q -ws -piv $obj2`;
+
+float $dis_dif[];
+$dis_dif[0]=$obj1_loc_t[0]-$obj2_t[0];
+$dis_dif[1]=$obj1_loc_t[1]-$obj2_t[1];
+$dis_dif[2]=$obj1_loc_t[2]-$obj2_t[2];
+
+catchQuiet (`move -r $dis_dif[0] $dis_dif[1] $dis_dif[2] $obj2`);
+
+delete obj2_gr;
+
+}
+
+
+
+global proc mirror_tx2(string $obj1,string $obj2,string $ref)
+{
+	
+
+float $ref_t[]=`xform -q -ws -piv $ref`;
+float $ref_r[]=`xform -q -ws -ro $ref`;
+
+
+float $obj1_t[]=`xform -q -ws -piv $obj1`;
+float $obj2_t[]=`xform -q -ws -piv $obj2`;
+
+spaceLocator -n "obj1_loc" -p $obj1_t[0] $obj1_t[1] $obj1_t[2];
+spaceLocator -n "obj2_loc" -p $obj2_t[0] $obj2_t[1] $obj2_t[2];
+
+xform -ws -piv $obj1_t[0] $obj1_t[1] $obj1_t[2] obj1_loc;
+xform -ws -piv $obj2_t[0] $obj2_t[1] $obj2_t[2] obj2_loc;
+
+group -n "obj1_gr" obj1_loc;
+group -n "obj2_gr" obj2_loc;
+
+xform -ws -piv $ref_t[0] $ref_t[1] $ref_t[2] obj1_gr;
+xform -ws -piv $ref_t[0] $ref_t[1] $ref_t[2] obj2_gr;
+
+duplicate -n "obj2_mgr" -rr obj1_gr; 
+scale -r -1 1 1 obj2_mgr; 
+rotate -r 0 (2*$ref_r[1]) 0 obj2_mgr;
+
+duplicate -n "obj1_mgr" -rr obj2_gr; 
+scale -r -1 1 1 obj1_mgr; 
+rotate -r 0 (2*$ref_r[1]) 0 obj1_mgr;
+
+
+delete obj1_gr;
+delete obj2_gr;
+
+
+float $obj1_loc_t[]=`xform -q -ws -piv obj1_loc`;
+float $obj2_loc_t[]=`xform -q -ws -piv obj2_loc`;
+
+float $dis_dif1[];
+$dis_dif1[0]=$obj1_loc_t[0]-$obj2_t[0];
+$dis_dif1[1]=$obj1_loc_t[1]-$obj2_t[1];
+$dis_dif1[2]=$obj1_loc_t[2]-$obj2_t[2];
+
+catchQuiet (`move -r $dis_dif1[0] $dis_dif1[1] $dis_dif1[2] $obj2`);
+
+
+float $dis_dif2[];
+$dis_dif2[0]=$obj2_loc_t[0]-$obj1_t[0];
+$dis_dif2[1]=$obj2_loc_t[1]-$obj1_t[1];
+$dis_dif2[2]=$obj2_loc_t[2]-$obj1_t[2];
+
+catchQuiet (`move -r $dis_dif2[0] $dis_dif2[1] $dis_dif2[2] $obj1`);
+
+
+
+delete obj2_mgr;
+delete obj1_mgr;
+
+}
+
+
+
+global proc rescmd()
+{
+	int $i=1;
+	for ($i=1;$i<=36;$i++)
+	{
+		string $b=("b"+$i);
+		button -e -l "load" $b;
+	}
+	
+	
+	
+}

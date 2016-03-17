@@ -1,0 +1,117 @@
+ 
+ global proc string wf.js.createMatch(string $obj,string $const, string $pre[], string $post[], string $iterate[])
+ {
+//wf.js.createMatch("pSphere1","t r s",{"translateX:5","translateY:10"},{"translateZ:1"},{"meh:pCube1:pCube2:0:10:50"});
+
+    // duplicate $obj and use it as the match object
+    $dup = `duplicate -rr $obj`;
+
+    // rename dup
+    $match = `rename $dup[0] ($obj + "_match")`;
+    
+    // delete the children
+    string $children[0];
+    $children = `listRelatives -f -c $match`;
+    if (size($children) > 0)
+        delete $children;
+
+    select $match;
+    
+    // unlock all the attributes
+    string $attrs[0];
+    $attrs= {"tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz" , "v"};
+    
+    for ($at in $attrs)
+    {
+        setAttr -l 0 ($match + "." + $at);
+    }
+    
+	addAttr -ln "match_obj" -at message $obj;
+      
+    connectAttr -f ($match + ".message") ($obj + ".match_obj");
+  
+  
+addAttr -ln "match_const" -dt "string" $obj;
+setAttr -type "string" ($obj + ".match_const") $const;
+
+//example pre  ::      "translateX:5.1"
+int $i=1;
+for ($pr in $pre)
+{
+string $buffer[0];
+tokenize $pr ":" $buffer;
+
+$newAttr = ("match_pre_"+$i+"_"+$buffer[0]);
+addAttr -ln $newAttr -at double $obj;
+eval ("setAttr "+$obj+"."+$newAttr+" "+ $buffer[1]);
+
+$i++;
+}
+
+
+//example post  ::      "translateX:5.1"
+int $i=1;
+for ($po in $post)
+{
+string $buffer[0];
+tokenize $po ":" $buffer;
+
+$newAttr = ("match_post_"+$i+"_"+$buffer[0]);
+addAttr -ln $newAttr -at double $obj;
+eval ("setAttr "+$obj+"."+$newAttr+" "+ $buffer[1]);
+
+$i++;
+}
+
+
+// example Iter "length:sphere1:sphere2:0:1:50"
+int $i=1;
+for ($it in $iterate)
+{
+
+string $buffer[0];
+tokenize $it ":" $buffer;
+
+string $attr="match_iterate_"+$i+"_attr";
+string $object="match_iterate_"+$i+"_object";
+string $target="match_iterate_"+$i+"_target";
+string $min="match_iterate_"+$i+"_min";
+string $max="match_iterate_"+$i+"_max";
+string $iter="match_iterate_"+$i+"_iter";
+
+
+	    addAttr -ln $attr -dt "string" $obj;
+
+        addAttr -ln $min -at double $obj;
+        addAttr -ln $max -at double $obj;
+        addAttr -ln $iter -at long -dv 50 $obj;
+		addAttr -ln $target -at message $obj;
+		addAttr -ln $object -at message $obj;
+		
+string $bu1[0];
+tokenize $buffer[1] "." $bu1;
+if( $buffer[1]==$bu1[0])
+	connectAttr -f ($buffer[1] + ".message") ($obj + "."+$object);
+else
+	connectAttr -f ($buffer[1]) ($obj + "."+$object);
+	
+string $bu2[0];
+tokenize $buffer[2] "." $bu2;
+if( $buffer[2]==$bu2[0])		
+	connectAttr -f ($buffer[2] + ".message") ($obj + "."+$target);
+else		
+	connectAttr -f ($buffer[2]) ($obj + "."+$target);
+		
+		
+		
+eval ("setAttr -type \"string\" "+$obj+"."+$attr+" "+ $buffer[0]);
+eval ("setAttr "+$obj+"."+$min+" "+ $buffer[3]);
+eval ("setAttr "+$obj+"."+$max+" "+ $buffer[4]);
+eval ("setAttr "+$obj+"."+$iter+" "+ $buffer[5]);
+
+
+$i++;
+}
+
+return $match;
+}

@@ -1,0 +1,24 @@
+string $file_nodes[] = `ls -type "file"`;
+
+
+for ($file_node in $file_nodes)
+	{	
+	// find place2dTexture node
+	string $place2dTexture_nodes[] = `listConnections -type "place2dTexture" $file_node`;
+	
+	
+	// get name of the texture file
+	string $file_address = `getAttr ($file_node+".fileTextureName")`;
+	
+	if ( `size $file_address` == 0 ) continue;
+	
+	string $file_name_tokenized[];
+	$numTokens = `tokenize $file_address "//" $file_name_tokenized`;
+	tokenize $file_name_tokenized[$numTokens-1] "." $file_name_tokenized;
+	string $file_name = $file_name_tokenized[0];
+	
+	
+	// set file and place2dTexture names accordingly
+	rename $file_node ($file_name+"_file");
+	rename $place2dTexture_nodes[0] ($file_name+"_place2dTexture");
+	}

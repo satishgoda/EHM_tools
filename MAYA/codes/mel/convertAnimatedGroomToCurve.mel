@@ -1,0 +1,38 @@
+// get time range
+float $my_timeRange[] = `timeControl -q -rangeArray $gPlayBackSlider`;
+if ($my_timeRange[1] - $my_timeRange[0] < 2.0){
+	float $min =  `playbackOptions -q -minTime`;
+	float $max =  `playbackOptions -q -maxTime`;
+	$my_timeRange[0] = $min;
+	$my_timeRange[1] = $max;
+	}
+
+// convert guides to curves for each frame
+int $i;
+for( $i=$my_timeRange[0]; $i<=$my_timeRange[1]; $i++  ){
+	currentTime -edit $i;
+	select -r pgYetiGroom1 ;
+	string $curveList[] = `pgYetiConvertGroomToCurves`;
+	}
+
+
+
+
+// create a blend shape for each set of curves
+// select curves sets in order
+string $sets[] = `ls -sl`;
+string $curveGroups[];
+clear($curveGroups);
+for ($set in $sets){
+	string $objs[] = `sets -q $set`;
+	$curveGroups[size($curveGroups)] = `group $objs`;
+	}
+
+select -clear;
+for ( $i = 1; $i<size($curveGroups); $i++ ){
+	select -add $curveGroups[$i];
+}
+select -add $curveGroups[0];
+
+blendShape -ib ;
+

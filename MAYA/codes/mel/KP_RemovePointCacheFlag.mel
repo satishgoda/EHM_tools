@@ -1,0 +1,19 @@
+/**
+removes point cache flag from selected nodes
+**/
+
+global proc KP_RemovePointCacheFlag()
+{
+	string $sel[] = `ls -sl`;
+	for($thisOne in $sel)
+		KP_RemovePointCacheFlagOf $thisOne;
+}
+
+global proc KP_RemovePointCacheFlagOf(string $obj)
+{
+	if (`attributeExists "KP_PCFlag" $obj`)
+	{
+		setAttr -l 0 ($obj+".KP_PCFlag");
+		deleteAttr -at "KP_PCFlag" $obj;
+	}
+}

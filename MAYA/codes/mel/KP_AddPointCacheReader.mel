@@ -1,0 +1,21 @@
+//	KP_AddPointCacheReader.mel
+//
+//	Copyright (C) 2007-2008, Kai Wolter
+//	http://www.kai-wolter.com
+//	mail@kai-wolter.com
+
+/**
+adds a KP_PointCacheReader to each selected object and applys an expression to evaluate at each frame 
+**/
+
+global proc KP_AddPointCacheReader()
+{
+	string $sel[] = `ls -sl`;
+	
+	for ($i = 0; $i < size($sel); $i++)
+	{
+		string $deformers[] = `deformer -type KP_PointCacheReader $sel[$i]`;
+		string $defHelperExpression = $deformers[0] + ".helper = time;";
+		expression -o $sel[$i] -s $defHelperExpression;
+	}	
+}

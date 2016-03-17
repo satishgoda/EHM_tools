@@ -1,0 +1,727 @@
+global proc wf.poser() 
+
+{
+	if (`window -q -ex poserWindow` == true) deleteUI poserWindow;
+	window -s false -w 270 -h 400 -t "MPoser v2.0 by wajdy farhan " poserWindow;
+	
+	
+	
+	
+	string $poserControl =`formLayout -numberOfDivisions 100 `;
+	
+	global string $poserPath;
+	
+	if (size($poserPath)==0)
+		$poserPath="C:/";
+	
+		string $ppath = `textField -text $poserPath -width 150 ppath`;
+	string $browse =`button -label "Browse" -c "browser1()" `;
+	
+	
+
+	string $aa1=`button -label "Save Animation" -w 90 -command "savepose2()"`;
+	string $a1=`button -label "Save Pose" -w 90 -command "savepose()"`;
+	string $pname = `textField -text "" -width 110 pname`;
+	string $a2=`button -label "Recall Pose/Anim" -w 100 -command "recallpose2()"`;	
+		
+	string $op=`optionMenu -l ""  -w 200 -cc "pco()" recallMenu`;
+				menuItem -label "by Name";
+				menuItem -label "by Selection";
+
+	string $pmenu=`textScrollList -dcc "recallpose2()" -w 110 -numberOfRows 17 pmenu`;
+	
+	string $c = `checkBox -l "Replace Prefix"  -cc "tco()" -v 0 pc`;
+	
+
+	string $tac = `textField -vis 0 -en false -width 90 tac`;
+	string $tbc = `textField -vis 0 -en false -width 90 tbc`;
+	
+	
+	string $t=`text -label "Path:"`;
+	string $a3=`button -label "Update" -w 90 -command "pupd()"`;	
+	string $a4=`button -label "Delete P/A" -w 90 -command "pdel()"`;
+	
+	string $tr = `checkBox -l "Time Reference"  -v 0 tr`;
+
+	/*
+	string $tex=`text -label "Select Master Controller For Scale"`;
+	string $scb=`button -label "Scale" -w 90 -command "sct()"`;	
+	string $val=`floatFieldGrp -numberOfFields 1 -label "Scale Value" -value1 2 val`;
+	string $tpiv=`intFieldGrp -numberOfFields 1 -label "Time Pivot" -value1 0 tpiv`;
+	*/
+	
+	formLayout -edit
+/*
+				-attachForm	$tex "top"   315  
+				-attachForm	$tex "left"  20  
+				
+				-attachForm	$scb "top"   390  
+				-attachForm	$scb "left"  80
+
+				
+				-attachForm	$tpiv "top"   360  
+				-attachForm	$tpiv "left"  0 
+				
+				-attachForm	$val "top"   337  
+				-attachForm	$val "left"  0 
+*/	
+				-attachForm	$t "top"   22  
+				-attachForm	$t "left"  20  
+				
+				-attachForm	$ppath "top"   20   
+				-attachForm	$ppath "left"  50  
+				
+				-attachForm		$browse "top"   20   
+				-attachForm		$browse "left"  200  
+				
+				
+				-attachForm	$aa1 "top"   80   
+				-attachForm	$aa1 "left"  20  
+				
+				
+				-attachForm	$a1 "top"   50   
+				-attachForm	$a1 "left"  20  
+				
+				-attachForm	$a2 "top"   110   
+				-attachForm	$a2 "left"  15
+				
+				-attachForm	$op "top"   132   
+				-attachForm	$op "left"  15
+				
+				-attachForm	$c "top"   154   
+				-attachForm	$c "left"  15	
+				
+				-attachForm	$tac "top"   176   
+				-attachForm	$tac "left"  15
+				
+				-attachForm	$tbc "top"   198   
+				-attachForm	$tbc "left"  15
+				
+				-attachForm	$a3 "top"   250   
+				-attachForm	$a3 "left"  20	
+				
+				-attachForm	$a4 "top"   280   
+				-attachForm	$a4 "left"  20				       
+ 	
+				-attachForm	$pname "top"   50   
+				-attachForm	$pname "left"  120
+				
+				 	
+				-attachForm	$pmenu "top"   80   
+				-attachForm	$pmenu "left"  120			
+				
+				-attachForm	$tr "top"   230   
+				-attachForm	$tr "left"  15	
+				
+				
+	$poserControl;			
+	
+	showWindow poserWindow;
+	
+	window -e -w 270 -h 400 poserWindow;
+	$fValues = ( "C:/"+ "values.tmp" );
+	$fileId=`fopen $fValues "a"`;
+	fclose $fileId;
+	
+	pupd();
+}
+
+global proc savepose2() {
+	
+	
+	global string $fmenu[];
+	
+	int $h=`textScrollList -q -numberOfItems pmenu`;
+
+	int $k=$h+1;
+	string $ppath = `textField -q -text ppath`;
+	global string $poserPath;
+	$poserPath=$ppath;
+	string $pname = `textField -q -text pname`;
+	string $selected[]=`ls -sl -tr`;
+	int $ex=0;
+	
+	for ($el in $fmenu){
+		if ($el==($pname+"_Anim"))
+		{
+			$ex=1;
+			warning "Animation with that name already exists";
+		}
+	}
+	
+	if ($pname != "" && $selected[0] != "" && $ex==0)
+	{
+	textScrollList -e -append ($pname+"_Anim") pmenu;
+	textScrollList -e -sii $k pmenu;
+	
+	$fValues = ( $ppath+ "values.tmp" );
+
+
+
+	$fileId=`fopen $fValues "a"`;
+ 	
+	fprint $fileId "++++";
+	fprint $fileId "\n";
+	
+ 	fprint $fileId ($pname+"_Anim");
+ 	fprint $fileId "\n";
+
+ 	fprint $fileId "wajdyKey";
+ 	fprint $fileId "\n";
+
+	
+	for ($sels in $selected)
+	{
+		
+		string $attrs[]=`listAttr -k -u $sels`;
+	
+		for ($att in $attrs)
+		{
+			
+				
+			float $keys[]=`keyframe -q -tc ($sels+"."+$att)`;
+			
+			
+			for ($key in $keys)
+			{
+				fprint $fileId ($sels+"."+$att);
+				fprint $fileId "\n";
+				fprint $fileId $key;
+ 				fprint $fileId "\n";
+				
+				selectKey -t $key -at $att $sels;
+				
+				float $ina[]=`keyTangent -q -inAngle`;
+				float $outa[]=`keyTangent -q -outAngle`;
+				float $inw[]=`keyTangent -q -inWeight`;
+				float $outw[]=`keyTangent -q -outWeight`;
+				string $itt[]=`keyTangent -q -itt`;
+				string $ott[]=`keyTangent -q -ott`;
+				
+				string $weights=($ina[0]+"_"+$inw[0]+"_"+$outa[0]+"_"+$outw[0]+"_"+$itt[0]+"_"+$ott[0]);
+				
+				
+				float $f=`getAttr -t $key ($sels+"."+$att)`;	
+
+				fprint $fileId $f;
+				fprint $fileId "\n";
+				
+				fprint $fileId $weights;
+				fprint $fileId "\n";
+			}
+			
+		}		
+	}
+	
+	
+	
+	fclose $fileId;
+	textField -e -text "" pname;
+	textScrollList -e -sii $k pmenu;
+	}
+pupd();
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+global proc recallpose2() {
+	
+int $ret = `optionMenu -q -sl recallMenu`;
+
+string $sel[]=`ls -sl`;
+
+
+string $ppath = `textField -q -text ppath`;
+global string $poserPath;
+$poserPath=$ppath;
+$fValues = ( $ppath+ "values.tmp" );
+$fileId=`fopen $fValues "r"`;
+string $nextLine = `fgetline $fileId`; 
+
+string $tac = `textField -q -text tac`;
+string $tbc = `textField -q -text tbc`;
+int $on=`checkBox -q -v pc`;
+
+
+while ( size( $nextLine ) > 0 ) { 
+ 
+	string $g[]=`textScrollList -q -si pmenu`;
+	string $q=$g[0];
+	
+	string $bn[];
+ 	$numTokens = `tokenize $nextLine "\n" $bn`;
+	
+
+	if ($bn[0] == $q) {
+		
+			$nextLine = `fgetline $fileId`; 
+			string $test[];
+			$numTokens = `tokenize $nextLine "\n" $test`;	
+			
+			
+		if ($test[0]=="wajdyKey")
+			{
+			global string $avs[];
+			$avs={"0"};
+				
+			$nextLine = `fgetline $fileId`; 	
+				
+
+			int $i=0;
+				while ($nextLine != "++++\n" && size($nextLine) > 0)
+					{
+						string $bn[];
+ 						$numTokens = `tokenize $nextLine "\n" $bn`;
+						$avs[$i]=$bn[0];
+						$nextLine = `fgetline $fileId`;
+						$i=$i+1;
+					} 
+	 	
+			float $ct=`currentTime -q`;
+			int $trv =`checkBox -q -v tr`;
+			int $sz=size($avs);
+			int $i=0;
+			int $flag=0;
+			int $j=0;
+			string $object;
+			string $ro;
+			while ($i < $sz)
+				{
+					global float $x;
+					$x=1;
+					string $h=$avs[$i+2];
+
+					eval ("$x="+$h);
+					
+					global float $k1;
+					$k1=1;
+					string $kh=$avs[$i+1];
+
+					eval ("$k1="+$kh);
+					
+					if ($trv==1)
+						$k1=$k1+$ct;
+					
+					string $weights=$avs[$i+3];
+					string $wbuffer[];
+					tokenize $weights "_" $wbuffer;
+					
+					global float $gina;
+					$gina=0;
+					eval ("$gina="+$wbuffer[0]);
+					
+					global float $ginw;
+					$ginw=1;
+					eval ("$ginw="+$wbuffer[1]);
+					
+					global float $gouta;
+					$gouta=0;
+					eval ("$gouta="+$wbuffer[2]);
+	
+					global float $goutw;
+					$goutw=0;
+					eval ("$goutw="+$wbuffer[3]);
+					
+					
+					
+					string $a=$avs[$i];
+					string $buffer[];
+					tokenize $a "." $buffer;
+					
+					if ($flag==0)
+						$object=$buffer[0];
+	
+					
+					if ($flag==1)
+						if($object!=$buffer[0])
+						{
+							$j++;
+							$object=$buffer[0];
+						}
+					
+					if ($ret==1)
+					{
+						if ($on==1)
+						{
+							if (size($tac)==0)
+								$ro=($tbc+$buffer[0]);
+							else			
+								$ro=`substitute $tac $buffer[0] $tbc`;
+						
+						}
+							
+						else
+							$ro=$buffer[0];
+					}
+					
+					
+					if ($ret==2)
+						$ro=$sel[$j];
+					
+					
+					$flag=1;
+					
+					
+					catch(`setKeyframe -attribute $buffer[1] -t $k1 -v $x $ro`) ;
+					catchQuiet (`selectKey -t $k1 -at $buffer[1] $ro`);
+					catchQuiet (`keyTangent -lock off`);
+					catchQuiet (`keyTangent -e -wt true`);
+					catchQuiet (`keyTangent -e -inAngle $gina -inWeight $ginw -outAngle $gouta -outWeight $goutw`); 
+					catchQuiet (`keyTangent -e -itt $wbuffer[4] -ott $wbuffer[5]`); 
+					$i=$i+4;
+				}
+			
+			}
+		else
+			{
+			
+			global string $avs[];
+			$avs={"0"};
+				int $i=0;
+				while ($nextLine != "++++\n" && size($nextLine) > 0)
+					{
+						string $bn[];
+ 						$numTokens = `tokenize $nextLine "\n" $bn`;
+						$avs[$i]=$bn[0];
+						$nextLine = `fgetline $fileId`;
+						$i=$i+1;
+					} 
+	 		
+			int $sz=size($avs);
+			int $i=0;
+			int $flag=0;
+			int $j=0;
+			string $object;
+			string $ro;
+			while ($i < $sz)
+				{
+					global float $x;
+					$x=1;
+					string $h=$avs[$i+1];
+
+					eval ("$x="+$h);
+					string $a=$avs[$i];
+					
+					string $buffer[];
+					tokenize $a "." $buffer;
+					
+					if ($flag==0)
+						$object=$buffer[0];
+	
+					
+					if ($flag==1)
+						if($object!=$buffer[0])
+						{
+							$j++;
+							$object=$buffer[0];
+						}
+					
+					if ($ret==1)
+					{
+						if ($on==1)
+							$ro=`substitute $tac $buffer[0] $tbc`;
+						else
+							$ro=$buffer[0];
+					}
+					
+					if ($ret==2)
+						$ro=$sel[$j];
+					
+					
+					$flag=1;
+					
+					
+					catch(`setAttr ($ro+"."+$buffer[1]) $x`);
+					$i=$i+2;
+				}
+			}		
+		}
+	$nextLine = `fgetline $fileId`; 
+} 
+fclose $fileId; 
+pupd();
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+global proc pupd() {
+string $ppath = `textField -q -text ppath`;	
+global string $poserPath;
+$poserPath=$ppath;
+textScrollList -e -ra pmenu;
+$fValues = ( $ppath+ "values.tmp" );
+$fileId=`fopen $fValues "r"`;
+string $nextLine = `fgetline $fileId`; 
+	
+global string $fmenu[];
+$fmenu={""};
+int $i=0;
+
+
+
+while ( size( $nextLine ) > 0 ) { 
+		
+if ($nextLine == "++++\n")
+		{		
+			$nextLine = `fgetline $fileId`; 
+			string $bn[];
+ 			$numTokens = `tokenize $nextLine "\n" $bn`;			
+			textScrollList -e -a $bn[0] pmenu;
+			$fmenu[$i]=$bn[0];
+			$i=$i+1;
+			} 
+
+$nextLine = `fgetline $fileId`; 
+}
+
+fclose $fileId; 
+
+}
+
+global proc pdel() {
+string $ppath = `textField -q -text ppath`;
+	global string $poserPath;
+	$poserPath=$ppath;
+$fValues = ( $ppath+ "values.tmp" );
+$fileId=`fopen $fValues "r"`;
+
+
+string $nextLine = `fgetline $fileId`; 
+global string $pfile[];
+$pfile={""};
+int $i=0;
+
+string $g[]=`textScrollList -q -si pmenu`;
+string $q=$g[0];
+int $flag=0;
+while ( size( $nextLine ) > 0 )	{
+		
+		$flag=0;	
+		if ($nextLine == "++++\n"){
+			$nextLine = `fgetline $fileId`;
+			string $bn[];
+ 			$numTokens = `tokenize $nextLine "\n" $bn`;	
+ 			if ($bn[0]!=$q){
+	 				$pfile[$i]="++++\n";
+	 				$i=$i+1;
+	 			while ($nextLine != "++++\n" && size($nextLine)>0 ){
+		 			$pfile[$i]=$nextLine;
+		 			$i=$i+1;
+		 			$nextLine = `fgetline $fileId`;
+	 				$flag=1;
+		 			}
+ 			}
+			}
+			if ($flag==0)
+			$nextLine = `fgetline $fileId`;
+		}
+ 					
+ fclose $fileId; 
+	
+ $fileId=`fopen $fValues "w"`;
+ int $i=0;
+ int $sz=size($pfile);
+ string $st;
+ while ($i<$sz)
+ {
+	 $st=$pfile[$i];
+	 fprint $fileId $st;
+	 $i=$i+1;
+ }
+ 
+ fclose $fileId; 
+  
+ pupd();
+ 
+}
+
+
+global proc savepose() {
+	string $ppath = `textField -q -text ppath`;
+	global string $poserPath;
+	$poserPath=$ppath;
+	global string $fmenu[];
+	
+	int $h=`textScrollList -q -numberOfItems pmenu`;
+
+	int $k=$h+1;
+	
+	string $pname = `textField -q -text pname`;
+	string $selected[]=`ls -sl -tr`;
+	int $ex=0;
+	
+	for ($el in $fmenu){
+	if ($el==($pname+"_Pose"))
+	{
+		$ex=1;
+		warning "Pose with that name already exists";
+	}
+	}
+	
+	if ($pname != "" && $selected[0] != "" && $ex==0)
+	{
+	textScrollList -e -append ($pname+"_Pose") pmenu;
+	textScrollList -e -sii $k pmenu;
+	
+	$fValues = ( $ppath+ "values.tmp" );
+
+
+
+	$fileId=`fopen $fValues "a"`;
+ 	
+	fprint $fileId "++++";
+	fprint $fileId "\n";
+	
+ 	fprint $fileId ($pname+"_Pose");
+ 	fprint $fileId "\n";
+
+ 
+	
+	for ($sels in $selected)
+	{
+		string $attrs[]=`listAttr -k -u $sels`;
+	
+		for ($att in $attrs)
+		{
+			float $f=getAttr ($sels+"."+$att);	
+			fprint $fileId ($sels+"."+$att);
+			fprint $fileId "\n";
+			fprint $fileId $f;
+			fprint $fileId "\n";
+			
+			}		
+	}
+	
+	
+	
+	fclose $fileId;
+	textField -e -text "" pname;
+	textScrollList -e -sii $k pmenu;
+	}
+pupd();
+
+
+}
+
+
+
+global proc pco()
+{
+int $ret = `optionMenu -q -sl recallMenu`;
+
+if ($ret==1) 
+	checkBox -e -en true -vis 1 pc;
+else
+	{
+	checkBox -e -v 0 -en false -vis 0 pc;
+	textField -e -vis 0 -en false tac;
+	textField -e -vis 0 -en false tbc;
+	}
+	
+	
+}
+
+
+global proc tco()
+{
+int $j=`checkBox -q -v pc`;
+if ($j==1) 
+{
+	textField -e -vis 1 -en true tac;
+	textField -e -vis 1 -en true tbc;
+}
+	
+else
+{
+	
+	textField -e -vis 0 -en false tac;
+	textField -e -vis 0 -en false tbc;
+}
+
+}
+
+
+global proc sct()
+{
+	string $sel[]=`ls -sl`;
+	string $pre=`substitute "ctrlMaster" $sel[0] ""`;
+	string $conts[]={"ctrlMaster","ctrlMasterCycle","ctrlHandPV_L","ctrlLegPV_R","ctrlLegPV_L","ctrlBall_L","ctrlBall_R","ctrlHandPV_R","ctrlHandOptions_L","ctrlHandOptions_R","ctrlHand_L","ctrlHand_R","ctrlHandRot_L","ctrlHandRot_R","ctrlFKHip","ctrlHead","ctrlNeck","ctrlSpine1","ctrlSpine2","ctrlSpine3","ctrlSpine4","ctrlCalvical_L","ctrlCalvical_R","Ctrl_face","Ctrl_squash","Ctrl_tongue","Ctrl_lips2","Ctrl_lips1","Ctrl_emotion2","Ctrl_emotion","Ctrl_sync","Ctrl_jaw","Ctrl_blink","Ctrl_eyelid","Ctrl_lookat","Ctrl_ires","Ctrl_squint","Ctrl_brow1","Ctrl_brow2","Ctrl_puff","Ctrl_lip3","Ctrl_Phonem1","Ctrl_Phonem2","Ctrl_volume1","Ctrl_volume2","Facial_swithch_extra","Facial_swithch","Ctrl_mouth_06","Ctrl_mouth_05","Ctrl_mouth_04","Ctrl_mouth_01","Ctrl_mouth_02","Ctrl_mouth_03","Ctrl_mouth_07","Ctrl_mouth_08","Ctrl_cheek_L","Ctrl_nose_L","ctrl_nose","Ctrl_nose_R","Ctrl_cheek_R","Ctrl_brow03_R","Ctrl_brow02_R","Ctrl_brow01_R","Ctrl_brow_M","Ctrl_brow01_L","Ctrl_brow02_L","Ctrl_brow03_L","ctrlElbow_L","ctrlShoulder_L","ctrlShoulder_R","ctrlElbow_R","ctrlHip_R","ctrlHip_L","ctrlKnee_L","ctrlKnee_R","ctrlAnkel_L","ctrlAnkel_R","ctrlShoulder","ctrlPelvis","ctrlHip","ctrlFootOption_L","ctrlFootOption_R","ctrlLeg_L","ctrlLeg_R"};
+	string $sconts[];
+	int $i=0;
+	for ($c in $conts)
+	{
+		$sconts[$i]=($pre+$c);
+		$i++;
+	}
+	select $sconts;
+	float $scale=`floatFieldGrp -q -value1  val`;
+	int $tpiv=`intFieldGrp -q -value1  tpiv`;
+	scaleKey -timeScale $scale -timePivot $tpiv;
+	
+	
+}
+
+
+global proc int browser2( string $filename, string $fileType )
+{
+ 	int $sz=size($filename);
+	string $s=`substring $filename $sz $sz`;
+	if ($s != "/")
+		$filename=$filename+"/";
+	
+	textField -e -text $filename ppath;
+	return 1;
+}
+ 
+ global proc int  browser1()
+{
+ 	fileBrowserDialog -m 4 -fc "browser2"  -an "Set_Path" ;
+	return 1;
+}

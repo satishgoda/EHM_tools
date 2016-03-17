@@ -1,0 +1,2 @@
+$aSelVerts = `filterExpand -sm 31`;
+abRevertSel($aSelVerts, "narrow_LfShape", "body_def", 0.5)

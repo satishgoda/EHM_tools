@@ -1,0 +1,201 @@
+/**
+KP_PointCacheManager by Kai Wolter
+
+www.kaipirinha.com
+mail@kaipirinha.com
+**/
+global proc KP_PointCacheManager()
+{
+	window -title "KP_PointCacheManager V1.0 by Kai Wolter" -widthHeight 400 300;
+	columnLayout;
+
+	rowColumnLayout -numberOfColumns 2;
+
+	int $startTime = `playbackOptions -q -animationStartTime`;
+	int $endTime = `playbackOptions -q -animationEndTime`;
+
+			
+	text -label "start frame";
+	floatField 	-width 100
+	 		-en 1
+			-v $startTime 
+			-ann "first frame to record"
+			UI_StartFrame;
+
+	text -label "end frame";
+	floatField 	-width 100
+	 		-en 1
+			-v $endTime 
+			-ann "last frame to record"
+			UI_EndFrame;
+
+	text -label "step size";
+	floatField 	-width 100
+	 		-en 1
+			-v 1.0
+			-ann "at a step size of one, the vertex positions are recorded at every frame, a step size of 0.5 doubles the recorded data, etc."
+			UI_StepSize;
+
+	checkBox	-label "record at once"
+			-ann "check this to record multiple objects simultaneously"
+			-value on
+			UI_RecordAtOnce;
+
+	intField	-width 100
+			-min 0
+			-v 0
+			-ann "define how many objects should be recorded simultaneously, 0 is defined as all at once"
+			UI_BunchSize;
+
+	checkBox 	-label "prefix namespace "
+	    		-ann "instead of removing the namespace this option will add it as a prefix to the file"
+	 	 	-value on
+			UI_UseNamespace;
+	
+	textField	-tx "."
+			-ann "delimeter for namespace"
+			UI_NamespaceDelimeter;
+
+	text -label "record selected only";
+
+	checkBox 	-label ""
+	    		-ann "record selected objects"
+	 	 	-value off
+			UI_Selected;
+
+
+	button -label "record" -width 60 -c "KP_RecordPC UI_Selected UI_StartFrame UI_EndFrame UI_StepSize UI_RecordAtOnce UI_BunchSize UI_UseNamespace UI_NamespaceDelimeter";
+	showWindow;
+}
+
+proc string[] GetPCFlaggedMeshObjects()
+{
+	string $meshes[] = `ls -type transform`;
+	
+	string $flaggedObjs[];
+	clear($flaggedObjs);
+	
+	int $cjt = 0;
+	for ($mesh in $meshes)
+	{
+		string $attributes[0];
+		$attributes = `listAttr -ud $mesh`;
+		for ($attr in $attributes)
+		{
+			if ($attr == "KP_PCFlag")
+			{
+				$flaggedObjs[$cjt] = $mesh;
+				$cjt++;
+			}
+		}
+	}
+	return $flaggedObjs;
+}
+
+global proc KP_RecordPC(string $SelectedUI, string $startFrameUI, string $endFrameUI, string $stepSizeUI, string $recordAtOnceUI, string $bunchSizeUI, string $useNamespaceUI, string $namespaceDelimeterUI)
+{ 
+  int $type = `checkBox -q -v $SelectedUI`;
+
+  float $startFrame = `floatField -q -v $startFrameUI`;
+
+  float $endFrame = `floatField -q -v $endFrameUI`;
+
+  float $stepSize = `floatField -q -v $stepSizeUI`;
+
+  int $recordAtOnce = `checkBox -q -v $recordAtOnceUI`;
+
+  int $bunchSize = `intField -q -v $bunchSizeUI`;
+
+  int $useNamespace = `checkBox -q -v $useNamespaceUI`;
+
+  string $namespaceDelimeter = `textField -q -tx $namespaceDelimeterUI`;
+
+  string $action = "KP_RecordPCSave" + " " + $type + " " + $startFrame + " " + $endFrame + " " +  $stepSize + " " + $recordAtOnce + " " + $bunchSize + " \"" + $namespaceDelimeter + "\" " + $useNamespace;
+  
+  fileBrowserDialog -m 1 -fc $action -ds 2 -fl "pci file,*.pci" -an "save PCI file";
+}
+
+global proc KP_RecordPCSave(int $type, float $startFrame, float $endFrame, float $stepSize, int $recordAtOnce, int $bunchSize, string $namespaceDelimeter, int $useNamespace, string $filename, string $fileType)
+{
+
+  string $obj[]= `ls -sl`;
+  if ( $type == 0 ) // flagged objs
+	{
+	     $obj = GetPCFlaggedMeshObjects();
+	     if ( size($obj) == 0 )
+		print ( "KP_PointCacheManager: no flagged objects in scene, no caches recorded.");
+	
+	     if ( $recordAtOnce ) // replace current selection by the selection of flagged objects
+	     {
+	       select -cl;
+	       select $obj;
+	     }
+	}
+	else
+        if ( size($obj) == 0 )
+	       print ( "KP_PointCacheManager: no objects seleced, no caches recorded.");
+
+
+  if ( $filename != "" && $startFrame < $endFrame && $stepSize > 0  &&  size($obj) > 0)
+  {
+	string $end = `match "\.pci" $filename`;
+	string $iniFile = $filename;
+	if ( $end == "" )
+		$iniFile += ".pci";
+
+        $filename = `substitute "\.pci" $filename ""`;
+
+	
+	$fileId=`fopen $iniFile "w"`;
+
+ 	fprint $fileId "[General]\n";
+	fprint $fileId ("Start=" + $startFrame + "\n");
+	fprint $fileId ("End=" + $endFrame + "\n");
+
+	fprint $fileId "[Parts]\n";	
+
+      
+	if ( $type == 0 ) // flagged objs
+	{
+	     $obj = GetPCFlaggedMeshObjects();
+	     if ( size($obj) == 0 )
+	       print ( "KP_PointCacheManager: no flagged objects in scene, no caches recorded.");
+	}
+	else
+        if ( size($obj) == 0 )
+	       print ( "KP_PointCacheManager: no objects seleced, no caches recorded.");
+
+	for ( $i =0; $i < size($obj); $i++ )
+  	{
+	        string $regularExpr = ".*:";
+		string $replaceBy = "";
+		if ( $useNamespace ) // don't replace the namespace by "" but by the namespace value and the defined delimeter
+		{
+		  $replaceBy = `match ".*:" $obj[$i]`;
+		  int $last = size($replaceBy) -1;
+		  if ( $last > 1 )
+		    $replaceBy = `substring $replaceBy 1 $last`;
+		  $replaceBy += $namespaceDelimeter;
+		}
+		string $fileNameInPCI = `substitute $regularExpr $obj[$i] $replaceBy`;
+		fprint $fileId ($fileNameInPCI + "=\n"); 
+		string $file = $filename + "_" + $fileNameInPCI + ".pc2"; 	
+
+		if ( ! $recordAtOnce )
+		  KP_PC_Record -f $file -s $startFrame -e $endFrame -r $stepSize $obj[$i];
+	}
+	fclose $fileId; // close pci file
+	if ( $recordAtOnce ) // record all at once
+	{
+		$file = $filename + "_"; // just set the file prefix
+		KP_PC_Record -f $file -s $startFrame -e $endFrame -r $stepSize -mo $bunchSize -ns $useNamespace -d $namespaceDelimeter;
+	}
+	
+  }
+  else
+    print ( "KP_PointCacheManager: please make sure you have entered a valid filename, the startFrame is smaller than the endFrame and the stepsize is greater than 0");
+ 
+}
+
+
+

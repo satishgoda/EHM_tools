@@ -1,0 +1,334 @@
+global proc DeosMirror()
+{
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//VARIABLES GENERALES -------------------------------------------------------------------- 
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	//Nombres
+	string 	$DeoWin_Mirror		= "DeoMirrorWin";
+	string 	$DeoTitle_Mirror 	= "Deo's Mirror";
+	string 	$DeoLayout_Mirror 	= "LayoutMirror";
+	//Window
+	int 	$DeoHeight_Mirror 	= 320;
+	int 	$DeoWidth_Mirror  	= 220;
+	//FrameLayout
+	int 	$DeoMinHeight_Mirror = 63;
+	int 	$DeoMaxHeight_Mirror = $DeoHeight_Mirror-10;
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//CERRAR VENTANA -------------------------------------------------------------------- 
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		if (`window -ex $DeoWin_Mirror`){
+			deleteUI -window $DeoWin_Mirror;
+		}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//CREAR VENTANA --------------------------------------------------------------------
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		window    
+	    	//-rtf true
+			-title  $DeoTitle_Mirror
+	   		-height $DeoHeight_Mirror
+	        -width  $DeoWidth_Mirror
+			-menuBar  1
+	        -sizeable 1
+	        -toolbox  1
+			$DeoWin_Mirror;
+		
+	//MENUS CONTEXTUALES
+		menu -label "About" -helpMenu true;
+		menuItem -label "About Application..." -c "AboutWindow"; 
+	           
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//LAYOUT  --------------------------------------------------------------------
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		columnLayout -adjustableColumn true $DeoLayout_Mirror; 
+
+		frameLayout 
+	          -cc "window -edit -h $DeoMinHeight_Mirror  $DeoWin_Mirror" 
+	          -ec "window -edit -h $DeoMaxHeight_Mirror $DeoWin_Mirror"
+	          -marginWidth 15
+	          -label ": : MIRROR : : "
+	          //-labelAlign "bottom"
+	          -borderStyle "in"                       
+	          -collapse false
+	          -collapsable true;
+	         
+	    columnLayout -adjustableColumn true -rowSpacing 1;
+	//--------------------------------------------------------------------------      
+			
+	        text  -height 30 -label "Mirror & Merge:" -width 140;
+	        
+	        rowColumnLayout -numberOfColumns 2 
+	        -cw 1 80
+	        -cw 2 80;
+
+	        button -backgroundColor 1 0.8 0.8  -height 28 -label "X -"  -c "Xizq";
+	        button -backgroundColor 0.8 0.8 1  -height 28 -label "X +"  -c "Xder";   
+	        
+	        button -backgroundColor 1 0.8 0.8  -height 28 -label "Y -"  -c "Yizq";
+	        button -backgroundColor 0.8 0.8 1  -height 28 -label "Y +"  -c "Yder";
+	        
+	        button -backgroundColor 1 0.8 0.8  -height 28 -label "Z -"  -c "Zizq"; 
+	        button -backgroundColor 0.8 0.8 1  -height 28 -label "Z +"  -c "Zder";          
+			
+		setParent ..;
+	    
+	//--------------------------------------------------------------------------	
+	    	       	
+		
+		text -label "" -height 10; 
+		separator;
+
+		text -height 20 -label "Object Mirror:" -width 100;
+	        
+		rowColumnLayout -numberOfColumns 3 
+			-cw 1 53
+			-cw 2 53
+			-cw 3 53;
+
+	        button -backgroundColor 1 0.5 0.5 -height 28 -label "X"  -c "MirrorX";
+	        button -backgroundColor 0.5 1 0.5 -height 28 -label "Y"  -c "MirrorY";
+	        button -backgroundColor 0.5 0.5 1 -height 28 -label "Z"  -c "MirrorZ";
+	       
+		setParent ..;
+
+		text  -height 20 -label "Instance Mirror:" -width 100;
+	        
+		rowColumnLayout -numberOfColumns 3 
+			-cw 1 53
+			-cw 2 53
+			-cw 3 53;
+
+		   button -backgroundColor 1 0.5 0.5 -height 28 -label "X" -width 25 -c "Instance_X";
+	       button -backgroundColor 0.5 1 0.5  -height 28 -label "Y" -width 25 -c "Instance_Y";
+	       button -backgroundColor 0.5 0.5 1 -height 28 -label "Z" -width 25 -c "Instance_Z";
+
+		setParent ..;
+
+		
+		//text -align "left" -height 20 -label "Instance Mirror:" -width 100;
+		button -backgroundColor 0.5 0.5 0.5  -label "Merge Instance" -c "Merge_Instance";
+
+	        
+			rowLayout;
+		setParent ..;
+	                   
+	//ABRIR  VENTANA --------------------------------------------------------------------
+		showWindow $DeoWin_Mirror;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//MENU CONTEXTUAL  --------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc AboutWindow(){
+
+	string $mensaje;	 //variable que almacenara todos los mensajes
+
+	// Lineas de texto a mostrar
+	$mensaje = ($mensaje + "Deo's Mirror it's a little tool for Maya, \n");	
+	$mensaje = ($mensaje + "in where you will have a fast way to do  \n");	
+	$mensaje = ($mensaje + "Simple Mirror by objects and/or Copy Mirros \n");	
+	$mensaje = ($mensaje + "with merges to make one mesh with mirror. \n");	
+	$mensaje = ($mensaje + "have basic settings as: \n \n");	
+
+	$mensaje = ($mensaje + "Copy and Mirror: | X+, X- | Y+, Y- | Z+, Z- | \n\n");
+    $mensaje = ($mensaje + "Mirror: X, Y, Z. \n\n"); 
+
+	$mensaje = ($mensaje + "If you have any comment, sent it to me at: \n");
+	$mensaje = ($mensaje + "deodatopr@gmail.com  ;) \n"); 
+	
+    //------------------------------------------------------------------------------
+	
+    confirmDialog 
+ 	   -title "About this Deo's Tool" 
+	   -ma "left"
+	   -message $mensaje
+  	   -button "Close";
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//COMANDOS --------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc Xder() {
+	string $listado[] = `ls -selection`;    
+	polyMirrorFace -ws 1  -direction 0 -mergeMode 0 -ch 1 $listado;
+	
+    	polyMergeVertex  -d 0.001 -am 1 -ch 1 $listado;
+	DeleteHistory;
+	FreezeTransformations;
+
+	print("Deo큦 Copy and Mirro X+ it's Done");
+}             
+
+global proc Xizq() {
+	string $listado[] = `ls -selection`;    
+	polyMirrorFace -ws 1  -direction 1 -mergeMode 0 -ch 1 $listado;
+	
+    	polyMergeVertex  -d 0.001 -am 1 -ch 1 $listado;
+	DeleteHistory;
+	FreezeTransformations;
+
+	print("Deo큦 Copy and Mirro X- it's Done");
+}
+   
+//--------------------------------------------------------------------------        
+
+global proc Yder() {
+	string $listado[] = `ls -selection`;    
+	polyMirrorFace -ws 1  -direction 2 -mergeMode 0 -ch 1 $listado;
+	
+    	polyMergeVertex  -d 0.001 -am 1 -ch 1 $listado;
+	DeleteHistory;
+	FreezeTransformations;
+
+	print("Deo큦 Copy and Mirro Y+ it's Done");
+}             
+
+global proc Yizq() {
+	string $listado[] = `ls -selection`;    
+	polyMirrorFace -ws 1  -direction 3 -mergeMode 0 -ch 1 $listado;
+	
+    	polyMergeVertex  -d 0.001 -am 1 -ch 1 $listado;
+	DeleteHistory;
+	FreezeTransformations;
+
+	print("Deo큦 Copy and Mirro Y- it's Done");
+}   
+
+//--------------------------------------------------------------------------        
+
+global proc Zder() {
+	string $listado[] = `ls -selection`;    
+	polyMirrorFace -ws 1  -direction 5 -mergeMode 0 -ch 1 $listado;
+	
+    	polyMergeVertex  -d 0.001 -am 1 -ch 1 $listado;
+	DeleteHistory;
+	FreezeTransformations;
+
+	print("Deo큦 Copy and Mirro Z+ it's Done");
+}             
+
+global proc Zizq() {
+	string $listado[] = `ls -selection`;    
+	polyMirrorFace -ws 1  -direction 4 -mergeMode 0 -ch 1 $listado;
+	
+    	polyMergeVertex  -d 0.001 -am 1 -ch 1 $listado;
+	DeleteHistory;
+	FreezeTransformations;
+
+	print("Deo큦 Copy and Mirro Z- it's Done");
+}             
+
+//--------------------------------------------------------------------------        
+//--------------------------------------------------------------------------        
+
+
+global proc Duplicate() {
+
+    Duplicate;
+    print("Ready to do Mirror");
+
+}
+
+//--------------------------------------------------------------------------        
+
+global proc MirrorX() {
+
+FreezeTransformations;
+	string $listado[] = `ls -selection`;
+
+	for ( $cadaUna in $listado){  
+		setAttr ($cadaUna + ".scaleX") -1;
+		ReversePolygonNormals;
+        FreezeTransformations;
+        DeleteHistory;
+	}               
+	print("Deo큦 Mirro X it's Done");
+
+}
+
+//--------------------------------------------------------------------------        
+
+global proc MirrorY() {
+
+FreezeTransformations;
+	string $listado[] = `ls -selection`;
+
+	for ( $cadaUna in $listado){  
+		setAttr ($cadaUna + ".scaleY") -1;
+		ReversePolygonNormals;
+        FreezeTransformations;
+        DeleteHistory;
+	}     
+	print("Deo큦 Mirro Y it's Done");    	
+}               
+
+//--------------------------------------------------------------------------        
+
+global proc MirrorZ() {
+
+FreezeTransformations;
+	string $listado[] = `ls -selection`;
+
+	for ( $cadaUna in $listado){  
+		setAttr ($cadaUna + ".scaleZ") -1;
+		ReversePolygonNormals;
+        FreezeTransformations;
+        DeleteHistory;
+	}     
+	print("Deo큦 Mirro Z it's Done");    	
+}                 
+
+//--------------------------------------------------------------------------        
+//--------------------------------------------------------------------------        
+
+
+global proc Instance_X() {
+
+	FreezeTransformations;
+	DeleteHistory;
+	instance; scale -r -1 1 1;
+	print("Instance Mirror X Done it");
+
+}
+
+global proc Instance_Y() {
+	
+	FreezeTransformations;
+	DeleteHistory;
+	instance; scale -r 1 -1 1;
+	print("Instance Mirror Y Done it");
+
+}
+
+global proc Instance_Z() {
+
+	FreezeTransformations;
+	DeleteHistory;
+	instance; scale -r 1 1 -1;
+	print("Instance Mirror Z Done it");
+
+}
+
+//--------------------------------------------------------------------------        
+//--------------------------------------------------------------------------   
+
+global proc Merge_Instance() {
+
+	polyUnite;
+	performPolyMerge 0;
+	FreezeTransformations;
+	DeleteHistory;
+	CenterPivot;
+	SelectAll;
+	select -cl  ;
+	print("Instance Mirror Z Done it");
+
+}
