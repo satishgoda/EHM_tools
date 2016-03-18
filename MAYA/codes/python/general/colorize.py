@@ -3,7 +3,7 @@ import os, inspect
 from functools import partial
 
 
-ehsan_script_directory = (inspect.getfile(inspect.currentframe()).partition('\\codes'))[0]
+ehsan_script_directory = (inspect.getfile(inspect.currentframe()).partition('codes'))[0]
 
 
 class Colorize():

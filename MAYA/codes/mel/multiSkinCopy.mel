@@ -1,0 +1,9 @@
+string $sel[] = `ls -sl`;
+
+int $i;
+for($i=0; $i<size($sel)-1; $i++)
+{
+    select $sel[size($sel)-1];
+    select -add $sel[$i];
+    copySkinWeights  -noMirror -surfaceAssociation closestPoint -influenceAssociation closestJoint;
+}

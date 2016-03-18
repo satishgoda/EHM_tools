@@ -93,37 +93,6 @@ if pythonPath not in sys.path:
     sys.path.append( pythonPath )
 
 # add mel script path to env
-scriptPath = ehsan_script_directory + '\codes\MELs;'
+scriptPath = ehsan_script_directory + '\codes\mel;'
 scriptPath += mel.eval('getenv "MAYA_SCRIPT_PATH"')
 mel.eval( 'putenv \"MAYA_SCRIPT_PATH\" "{}";'.format(scriptPath) )
-
-"""
-f = open( path, 'r' )
-
-# add plugin directory
-if not pluginPath in f.read():
-	f = open( path, 'a' )
-	f.write( '\n%s' %pluginPath )
-
-
-# add mel script directory
-f = open( path, 'r' )
-if not scriptPath in f.read():
-	f = open( path, 'a' )
-	f.write( '\n%s' %scriptPath )
-	sys.stdout.write( "It seems this is the first time you're running EHM tools, please restart maya!" )
-
-
-# add module  directory
-f = open( path, 'r' )
-if not modulePath in f.read():
-	f = open( path, 'a' )
-	f.write( '\n%s' %modulePath )
-	sys.stdout.write( "It seems this is the first time you're running EHM tools, please restart maya!" )
-
-
-
-
-
-f.close()
-"""
